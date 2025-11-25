@@ -1,0 +1,794 @@
+openapi: 3.1.0
+info:
+  title: AI CV Tailor API
+  version: 1.0.0
+  description: |
+    REST API for the AI CV Tailor application. Enables CV upload, job description processing,
+    gap analysis, and CV tailoring for ATS optimization.
+    
+    **Key Features:**
+    - CV upload and text extraction (PDF, DOCX, TXT)
+    - Job description input via text or URL
+    - AI-powered gap analysis
+    - CV tailoring with anti-fabrication validation
+    - ATS-compatible PDF generation
+    
+    **Data Retention:** All data is session-only (no persistence per FR-017, FR-018)
+  contact:
+    name: AI CV Tailor Support
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Development server
+  - url: https://api.tailorcv.example.com/api/v1
+    description: Production server
+
+tags:
+  - name: CV Upload
+    description: CV file upload and validation endpoints
+  - name: Job Description
+    description: Job description input and parsing endpoints
+  - name: Analysis
+    description: Gap analysis and CV tailoring endpoints
+  - name: Export
+    description: PDF generation and download endpoints
+  - name: Health
+    description: Health check and status endpoints
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Returns API health status and version
+      operationId: healthCheck
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /cv/upload:
+    post:
+      tags: [CV Upload]
+      summary: Upload CV file
+      description: |
+        Upload a CV file (PDF, DOCX, TXT) for processing. Validates file size (≤5MB),
+        format (text-extractable), language (English), and page count (≤5 pages).
+        
+        **Validations (FR-001, FR-001a, FR-001b, FR-025, FR-027):**
+        - File size ≤ 5 MB
+        - Format: PDF (text-based), DOCX, TXT
+        - Language: English only
+        - Page count ≤ 5 pages
+      operationId: uploadCV
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: CV file (PDF, DOCX, or TXT)
+      responses:
+        '200':
+          description: CV uploaded and processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MasterCVResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '413':
+          description: File too large (>5MB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /cv/validate:
+    post:
+      tags: [CV Upload]
+      summary: Validate CV without uploading
+      description: Pre-flight validation check for file size, format, and basic content
+      operationId: validateCV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fileName, fileSize, fileType]
+              properties:
+                fileName:
+                  type: string
+                  example: "john_doe_resume.pdf"
+                fileSize:
+                  type: integer
+                  description: File size in bytes
+                  example: 1048576
+                fileType:
+                  type: string
+                  enum: [pdf, docx, txt]
+                  example: "pdf"
+      responses:
+        '200':
+          description: Validation passed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "File meets all requirements"
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /job/text:
+    post:
+      tags: [Job Description]
+      summary: Submit job description as text
+      description: |
+        Submit a job description via direct text input. Validates language (English),
+        length (≤2500 words), and parses requirements using AI.
+        
+        **Validations (FR-002, FR-026, FR-028):**
+        - Language: English only
+        - Word count ≤ 2500 words (~5 pages)
+      operationId: submitJobText
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text:
+                  type: string
+                  description: Job description text
+                  minLength: 10
+                  maxLength: 50000
+                  example: "We are seeking a Senior Software Engineer..."
+      responses:
+        '200':
+          description: Job description processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDescriptionResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /job/url:
+    post:
+      tags: [Job Description]
+      summary: Submit job description via URL
+      description: |
+        Extract job description from a URL (LinkedIn, Indeed, Glassdoor supported).
+        Implements 10-second timeout and handles expired/removed postings.
+        
+        **Validations (FR-003, FR-016a, FR-016b, FR-026, FR-028):**
+        - URL timeout: 10 seconds
+        - Detects 404/410 (expired postings)
+        - Language: English only
+        - Word count ≤ 2500 words
+      operationId: submitJobURL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Job posting URL
+                  example: "https://www.linkedin.com/jobs/view/123456789"
+      responses:
+        '200':
+          description: Job description extracted and processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobDescriptionResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '408':
+          description: URL extraction timeout (10 seconds)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '410':
+          description: Job posting expired or removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /analyze:
+    post:
+      tags: [Analysis]
+      summary: Generate gap analysis
+      description: |
+        Compare CV with job description to identify gaps and relevance points.
+        Returns matched skills, missing skills, relevant experiences, and warnings.
+        
+        **Outputs (FR-006, FR-007, FR-022, FR-023):**
+        - Gap analysis (missing skills)
+        - Relevance mapping (matching experiences)
+        - Low match warnings (if <30% overlap)
+        - Minimal job info warnings
+      operationId: analyzeGap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cvId, jobId]
+              properties:
+                cvId:
+                  type: string
+                  format: uuid
+                  description: Master CV ID from /cv/upload response
+                jobId:
+                  type: string
+                  format: uuid
+                  description: Job description ID from /job/text or /job/url response
+      responses:
+        '200':
+          description: Gap analysis completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GapAnalysisResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          description: CV or job description not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /tailor:
+    post:
+      tags: [Analysis]
+      summary: Generate tailored CV
+      description: |
+        Generate optimized CV for the specific job. Rewrites content to emphasize
+        relevant experience, incorporates keywords, and reorganizes sections.
+        Includes anti-fabrication validation.
+        
+        **Processing (FR-008, FR-009, FR-010, FR-010a, FR-010b, FR-019, FR-020):**
+        - AI rewriting with anti-fabrication constraints
+        - Content reorganization
+        - Keyword incorporation
+        - Automated validation against original CV
+        - 3 retries with exponential backoff on API failures
+        - Target processing time: <20 seconds (SC-005)
+      operationId: tailorCV
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [cvId, jobId, gapAnalysisId]
+              properties:
+                cvId:
+                  type: string
+                  format: uuid
+                jobId:
+                  type: string
+                  format: uuid
+                gapAnalysisId:
+                  type: string
+                  format: uuid
+      responses:
+        '200':
+          description: Tailored CV generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TailoredCVResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          description: CV, job description, or gap analysis not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: Fabrication detected during validation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: AI service unavailable (after 3 retries)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /export/pdf/{tailoredCvId}:
+    get:
+      tags: [Export]
+      summary: Download tailored CV as PDF
+      description: |
+        Download the tailored CV as an ATS-compatible PDF.
+        
+        **Output (FR-012, SC-004):**
+        - Clean, structured PDF
+        - ATS-parseable format
+        - 90% ATS compatibility target
+      operationId: downloadPDF
+      parameters:
+        - name: tailoredCvId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Tailored CV ID from /tailor response
+      responses:
+        '200':
+          description: PDF file
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Tailored CV not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /export/text/{tailoredCvId}:
+    get:
+      tags: [Export]
+      summary: Download tailored CV as plain text
+      description: |
+        Download the tailored CV as clean plain text.
+        
+        **Output (FR-011):**
+        - Plain text version
+        - No formatting artifacts
+      operationId: downloadText
+      parameters:
+        - name: tailoredCvId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Text file
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tailored CV not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "healthy"
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+
+    MasterCVResponse:
+      type: object
+      required: [id, fileName, fileType, extractedText, pageCount, language]
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "a1b2c3d4-e5f6-4a5b-8c9d-0e1f2a3b4c5d"
+        fileName:
+          type: string
+          example: "john_doe_resume.pdf"
+        fileType:
+          type: string
+          enum: [pdf, docx, txt]
+          example: "pdf"
+        fileSize:
+          type: integer
+          description: File size in bytes
+          example: 1048576
+        uploadedAt:
+          type: string
+          format: date-time
+        extractedText:
+          type: string
+          description: Extracted plain text from CV
+        parsedSections:
+          type: array
+          items:
+            $ref: '#/components/schemas/CVSection'
+        language:
+          type: string
+          enum: [en]
+          example: "en"
+        pageCount:
+          type: integer
+          minimum: 1
+          maximum: 5
+          example: 2
+
+    CVSection:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [summary, experience, education, skills, certifications, other]
+        title:
+          type: string
+          example: "Work Experience"
+        content:
+          type: string
+        items:
+          type: array
+          items:
+            type: string
+          description: Bullet points or list items
+
+    JobDescriptionResponse:
+      type: object
+      required: [id, source, rawText, requirements, language, wordCount]
+      properties:
+        id:
+          type: string
+          format: uuid
+        source:
+          type: string
+          enum: [text, url]
+        sourceUrl:
+          type: string
+          format: uri
+          nullable: true
+        rawText:
+          type: string
+        extractedAt:
+          type: string
+          format: date-time
+        requirements:
+          $ref: '#/components/schemas/JobRequirements'
+        language:
+          type: string
+          enum: [en]
+        wordCount:
+          type: integer
+          maximum: 2500
+        platform:
+          type: string
+          enum: [linkedin, indeed, glassdoor, other]
+          nullable: true
+
+    JobRequirements:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "Senior Software Engineer"
+        company:
+          type: string
+          nullable: true
+          example: "Tech Corp"
+        seniorityLevel:
+          type: string
+          nullable: true
+          example: "Senior"
+        skills:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequiredSkill'
+        responsibilities:
+          type: array
+          items:
+            type: string
+        qualifications:
+          type: array
+          items:
+            type: string
+        keywords:
+          type: array
+          items:
+            type: string
+
+    RequiredSkill:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Python"
+        category:
+          type: string
+          enum: [technical, soft, domain, tool, language]
+        required:
+          type: boolean
+        yearsExperience:
+          type: integer
+          nullable: true
+          minimum: 0
+
+    GapAnalysisResponse:
+      type: object
+      required: [id, cvId, jobId, overallMatch, matchedSkills, missingSkills, relevantExperience]
+      properties:
+        id:
+          type: string
+          format: uuid
+        cvId:
+          type: string
+          format: uuid
+        jobId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        overallMatch:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Percentage match between CV and job
+        matchedSkills:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchedSkill'
+        missingSkills:
+          type: array
+          items:
+            $ref: '#/components/schemas/MissingSkill'
+        relevantExperience:
+          type: array
+          items:
+            $ref: '#/components/schemas/RelevantExperience'
+        warnings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Warning'
+
+    MatchedSkill:
+      type: object
+      properties:
+        skillName:
+          type: string
+        matchConfidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+        cvSource:
+          type: string
+          description: Quote from CV showing this skill
+        jobRequirement:
+          type: string
+          description: Requirement from job description
+
+    MissingSkill:
+      type: object
+      properties:
+        skillName:
+          type: string
+        importance:
+          type: string
+          enum: [required, preferred]
+        category:
+          type: string
+        suggestedAlternatives:
+          type: array
+          items:
+            type: string
+          description: Similar skills user has
+
+    RelevantExperience:
+      type: object
+      properties:
+        cvSection:
+          type: string
+        cvContent:
+          type: string
+        jobResponsibility:
+          type: string
+        relevanceScore:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    Warning:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [low_match, minimal_job_info, processing_time]
+        severity:
+          type: string
+          enum: [info, warning, error]
+        message:
+          type: string
+        recommendation:
+          type: string
+          nullable: true
+
+    TailoredCVResponse:
+      type: object
+      required: [id, cvId, jobId, gapAnalysisId, textVersion, pdfUrl, processingTime, validationPassed]
+      properties:
+        id:
+          type: string
+          format: uuid
+        cvId:
+          type: string
+          format: uuid
+        jobId:
+          type: string
+          format: uuid
+        gapAnalysisId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+        textVersion:
+          type: string
+          description: Clean plain text version of tailored CV
+        pdfUrl:
+          type: string
+          format: uri
+          description: URL to download PDF version
+        modifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Modification'
+        keywordMatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/KeywordMatch'
+        processingTime:
+          type: number
+          format: float
+          description: Processing time in seconds
+          maximum: 20.0
+        validationPassed:
+          type: boolean
+          description: Anti-fabrication validation result
+
+    Modification:
+      type: object
+      properties:
+        section:
+          type: string
+        modificationType:
+          type: string
+          enum: [rewrite, reorder, emphasis]
+        original:
+          type: string
+        modified:
+          type: string
+        reason:
+          type: string
+
+    KeywordMatch:
+      type: object
+      properties:
+        keyword:
+          type: string
+        incorporated:
+          type: boolean
+        location:
+          type: string
+        naturalness:
+          type: integer
+          minimum: 0
+          maximum: 100
+
+    ErrorResponse:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+          example: "validation_error"
+        message:
+          type: string
+          example: "File size exceeds 5 MB limit"
+        details:
+          type: object
+          nullable: true
+          description: Additional error details
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            fileTooLarge:
+              value:
+                error: "file_too_large"
+                message: "File size exceeds 5 MB limit (FR-001a)"
+                timestamp: "2025-11-25T10:00:00Z"
+            nonEnglish:
+              value:
+                error: "language_not_supported"
+                message: "Only English language is supported (FR-025)"
+                timestamp: "2025-11-25T10:00:00Z"
+            tooManyPages:
+              value:
+                error: "too_many_pages"
+                message: "CV exceeds 5 pages limit (FR-027)"
+                timestamp: "2025-11-25T10:00:00Z"
+
+    UnprocessableEntity:
+      description: Unprocessable entity (Pydantic validation error)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+

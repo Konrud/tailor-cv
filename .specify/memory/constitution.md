@@ -1,50 +1,70 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+# Human-as-Tool Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Single Page Application
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All user-facing functionality must be delivered as a single page application (SPA).
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Responsive Design
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+The application must be fully responsive, providing an optimal experience across devices and screen sizes. Mobile-first design approach is mandatory. Fluids layouts that adapt to all screen sizes. Touch-friendly interfaces with appropriate sizing.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Minimal Dependencies
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Dependencies should be minimized. Only include external libraries when strictly required for functionality or security. Regular dependencies audit and removal of unused packages.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Justified Complexity
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Any added complexity must be justified by clear functional, performance, or maintainability benefits. Simplicity is preferred.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### VI. Performance first
+
+Fast loading times across all devices and connections; Optimized assets (images, fonts, scripts); Lazy loading for non-critical content; Core Web Vitals compliance.
+
+### VII. Accessibility & Standards
+
+WCAG 2.1 AA compliance; Semantic HTML structure; Progressive enhancements principals; Cross-browser compatibility principles.
+
+## Technical Standards
+
+1. All code must follow established coding standards and best practices
+2. Performance metrics must be defined and monitored
+3. Security requirements must be documented and implemented
+4. Accessibility standards (WCAG) must be met
+
+## Development Process
+
+1. All changes must be reviewed and approved through pull requests
+2. Documentation must be updated with code changes
+3. Regular code quality audits must be performed
+
+## Build & Deployment Standards
+1. Environment specific builds supported (dev/staging/prod).
+2. Files should not be stagged or pushed to the git automatically. Only user can do that.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution serves as the foundational document for the tailorCV project. It supersedes all other practice documents and technical decisions.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+### Amendment Process
+
+1. Proposals must be submitted as pull requests
+2. Changes require documentation and impact analysis
+3. Major changes require a migration plan
+
+### Compliance
+
+1. All pull requests must verify constitution compliance
+2. Regular audits will be conducted to ensure adherence
+3. Violations must be documented and addressed
+4. Exceptions require explicit approval and documentation
+
+### Version Control
+
+1. This constitution follows semantic versioning
+2. Breaking changes increment MAJOR version
+3. New features increment MINOR version
+4. Clarifications increment PATCH version
+
+**Version**: 1.0.0 | **Ratified**: 2025-11-25 | **Last Amended**: 2025-11-25

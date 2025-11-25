@@ -41,10 +41,11 @@ WCAG 2.1 AA compliance; Semantic HTML structure; Progressive enhancements princi
 
 ## Build & Deployment Standards
 1. Environment specific builds supported (dev/staging/prod).
+2. Files should not be stagged or pushed to the git automatically. Only user can do that.
 
 ## Governance
 
-This constitution serves as the foundational document for the Human-as-Tool project. It supersedes all other practice documents and technical decisions.
+This constitution serves as the foundational document for the tailorCV project. It supersedes all other practice documents and technical decisions.
 
 ### Amendment Process
 
@@ -66,4 +67,4 @@ This constitution serves as the foundational document for the Human-as-Tool proj
 3. New features increment MINOR version
 4. Clarifications increment PATCH version
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-11 | **Last Amended**: 2025-10-11
+**Version**: 1.0.0 | **Ratified**: 2025-11-25 | **Last Amended**: 2025-11-25
