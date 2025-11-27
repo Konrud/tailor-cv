@@ -18,12 +18,14 @@
 ## Path Conventions
 
 This project uses web app structure:
+
 - Backend: `backend/src/`
 - Frontend: `frontend/src/`
 
 ## Phase Numbering Note
 
 Implementation phases below (Phase 1-7) follow task execution order. These correspond to plan.md as follows:
+
 - plan.md Phase 0 (Research) → Already complete (research.md)
 - plan.md Phase 1 (Design) → Already complete (data-model.md, contracts/, quickstart.md)
 - plan.md Phase 2 (Tasks) → This file
@@ -35,16 +37,16 @@ Implementation phases below (Phase 1-7) follow task execution order. These corre
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create backend project structure at backend/src/ with api/, models/, services/, utils/ directories
-- [ ] T002 Create frontend project structure at frontend/src/ with components/, pages/, services/, types/, utils/, styles/ directories
-- [ ] T003 [P] Initialize backend Python 3.13.3 project with FastAPI dependencies in backend/requirements.txt
-- [ ] T004 [P] Initialize frontend React 19.2.0 + TypeScript 5.9.3 project with Vite in frontend/package.json
-- [ ] T005 [P] Configure backend linting (Ruff) in backend/pyproject.toml
-- [ ] T006 [P] Configure frontend linting (ESLint) and formatting (Prettier) in frontend/.eslintrc.json
-- [ ] T007 Create backend .env.example with OPENAI_API_KEY, CORS_ORIGINS, MAX_FILE_SIZE_MB configuration
-- [ ] T008 Create frontend .env.example with VITE_API_URL configuration
-- [ ] T009 [P] Setup TypeScript strict mode configuration in frontend/tsconfig.json
-- [ ] T010 [P] Setup global CSS variables and resets in frontend/src/styles/global.css
+- [x] T001 Create backend project structure at backend/src/ with api/, models/, services/, utils/ directories
+- [x] T002 Create frontend project structure at frontend/src/ with components/, pages/, services/, types/, utils/, styles/ directories
+- [x] T003 [P] Initialize backend Python 3.13.3 project with FastAPI dependencies in backend/requirements.txt
+- [x] T004 [P] Initialize frontend React 19.2.0 + TypeScript 5.9.3 project with Vite in frontend/package.json
+- [x] T005 [P] Configure backend linting (Ruff) in backend/pyproject.toml
+- [x] T006 [P] Configure frontend linting (ESLint) and formatting (Prettier) in frontend/.eslintrc.json
+- [x] T007 Create backend .env.example with OPENAI_API_KEY, CORS_ORIGINS, MAX_FILE_SIZE_MB configuration
+- [x] T008 Create frontend .env.example with VITE_API_URL configuration
+- [x] T009 [P] Setup TypeScript strict mode configuration in frontend/tsconfig.json
+- [x] T010 [P] Setup global CSS variables and resets in frontend/src/styles/global.css
 
 ---
 
@@ -54,21 +56,21 @@ Implementation phases below (Phase 1-7) follow task execution order. These corre
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T011 Create FastAPI app entry point with CORS configuration in backend/src/main.py
-- [ ] T012 [P] Create configuration loading utility with Pydantic Settings in backend/src/utils/config.py
-- [ ] T013 [P] Create custom exception classes for validation, timeout, fabrication errors in backend/src/utils/errors.py
-- [ ] T014 [P] Create base Pydantic models for CVSection in backend/src/models/cv.py
-- [ ] T015 [P] Create base Pydantic models for RequiredSkill, JobRequirements in backend/src/models/job.py
-- [ ] T016 Create health check endpoint GET /health in backend/src/api/__init__.py
-- [ ] T017 [P] Create TanStack Query setup and API client configuration in frontend/src/services/api.ts
-- [ ] T018 [P] Create TypeScript type definitions for session storage in frontend/src/types/session.ts
-- [ ] T019 [P] Create SessionStorage utility functions in frontend/src/utils/session-storage.ts
-- [ ] T020 [P] Create client-side validation helpers in frontend/src/utils/validation.ts
-- [ ] T021 [P] Create React Router setup with routes in frontend/src/App.tsx
-- [ ] T022 [P] Create common UI components: Button in frontend/src/components/common/Button/
-- [ ] T023 [P] Create common UI components: ErrorMessage in frontend/src/components/common/ErrorMessage/
-- [ ] T024 [P] Create common UI components: LoadingSpinner in frontend/src/components/common/LoadingSpinner/
-- [ ] T025 [P] Create common UI components: ProgressBar in frontend/src/components/common/ProgressBar/
+- [x] T011 Create FastAPI app entry point with CORS configuration in backend/src/main.py
+- [x] T012 [P] Create configuration loading utility with Pydantic Settings in backend/src/utils/config.py
+- [x] T013 [P] Create custom exception classes for validation, timeout, fabrication errors in backend/src/utils/errors.py
+- [x] T014 [P] Create base Pydantic models for CVSection in backend/src/models/cv.py
+- [x] T015 [P] Create base Pydantic models for RequiredSkill, JobRequirements in backend/src/models/job.py
+- [x] T016 Create health check endpoint GET /health in backend/src/api/**init**.py
+- [x] T017 [P] Create TanStack Query setup and API client configuration in frontend/src/services/api.ts
+- [x] T018 [P] Create TypeScript type definitions for session storage in frontend/src/types/session.ts
+- [x] T019 [P] Create SessionStorage utility functions in frontend/src/utils/session-storage.ts
+- [x] T020 [P] Create client-side validation helpers in frontend/src/utils/validation.ts
+- [x] T021 [P] Create React Router setup with routes in frontend/src/App.tsx
+- [x] T022 [P] Create common UI components: Button in frontend/src/components/common/Button/
+- [x] T023 [P] Create common UI components: ErrorMessage in frontend/src/components/common/ErrorMessage/
+- [x] T024 [P] Create common UI components: LoadingSpinner in frontend/src/components/common/LoadingSpinner/
+- [x] T025 [P] Create common UI components: ProgressBar in frontend/src/components/common/ProgressBar/
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -363,6 +365,7 @@ With multiple developers:
 ### Suggested MVP Scope
 
 **Minimum Viable Product**: User Story 1 only (Tasks T001-T063)
+
 - Core value: Upload CV + paste job → receive tailored CV with PDF download
 - 53 tasks total (10 setup + 15 foundational + 28 US1 implementation)
 - Estimated effort: 2-3 weeks for single developer
@@ -379,4 +382,3 @@ With multiple developers:
 - Commit after each task or logical group
 - Stop at any checkpoint to validate story independently
 - Tests NOT included per feature specification - no test tasks generated
-
